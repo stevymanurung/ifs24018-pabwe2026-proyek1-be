@@ -22,7 +22,7 @@ export function createApiRouter(controllers, db, authOptions) {
   }));
   router.get('/health', asyncHandler(async (_req, res) => {
     await db.prepare('SELECT 1').get();
-    return res.json({ status: 'ok', database: 'connected' });
+    return res.json({ status: 'ok', database: 'connected', dialect: db.dialect });
   }));
   router.use('/auth', createAuthRoutes(db, authOptions));
   const auth = requireAuth(db, authOptions);

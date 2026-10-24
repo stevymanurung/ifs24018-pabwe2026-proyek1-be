@@ -8,6 +8,7 @@ export function openDatabase(file) {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
   const nativeDb = new DatabaseSync(file);
   const db = {
+    dialect: 'sqlite',
     prepare(sql) {
       const statement = nativeDb.prepare(sql);
       return {
