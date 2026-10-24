@@ -63,7 +63,12 @@ test('PostgreSQL menyimpan akun dan seluruh data lintas instance backend', async
     assert.ok(dashboard.json);
 
     const health = await worker.request('GET', '/api/health');
-    assert.deepEqual(health.json, { status: 'ok', database: 'connected', dialect: 'postgres' });
+    assert.deepEqual(health.json, {
+      status: 'ok',
+      database: 'connected',
+      dialect: 'postgres',
+      revision: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
+    });
   } finally {
     await Promise.all([issuer.close(), worker.close()]);
     await database.close();

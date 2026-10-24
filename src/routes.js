@@ -22,7 +22,12 @@ export function createApiRouter(controllers, db, authOptions) {
   }));
   router.get('/health', asyncHandler(async (_req, res) => {
     await db.prepare('SELECT 1').get();
-    return res.json({ status: 'ok', database: 'connected', dialect: db.dialect });
+    return res.json({
+      status: 'ok',
+      database: 'connected',
+      dialect: db.dialect,
+      revision: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
+    });
   }));
   router.use('/auth', createAuthRoutes(db, authOptions));
   const auth = requireAuth(db, authOptions);

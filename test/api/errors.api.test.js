@@ -4,7 +4,12 @@ import { apiTest } from '../helpers/testServer.js';
 apiTest('GET /api/health menjawab ok', async ({ request }) => {
   const res = await request('GET', '/api/health');
   assert.equal(res.status, 200);
-  assert.deepEqual(res.json, { status: 'ok', database: 'connected', dialect: 'sqlite' });
+  assert.deepEqual(res.json, {
+    status: 'ok',
+    database: 'connected',
+    dialect: 'sqlite',
+    revision: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
+  });
 });
 
 apiTest('GET /api menampilkan petunjuk endpoint autentikasi', async ({ request }) => {
