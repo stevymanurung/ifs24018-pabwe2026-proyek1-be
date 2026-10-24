@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { openDatabase } from '../../src/db/connection.js';
 import { startTestServer } from '../helpers/testServer.js';
 
 test('registrasi, login, sesi, dan logout akun', async () => {
@@ -23,8 +24,9 @@ test('registrasi, login, sesi, dan logout akun', async () => {
 
 test('token login tetap dapat dipakai di instance backend lain', async () => {
   const tokenSecret = 'test-shared-auth-secret-with-enough-entropy';
-  const issuer = await startTestServer({ authTokenSecret: tokenSecret, bypassAuthForTests: false });
-  const worker = await startTestServer({ authTokenSecret: tokenSecret, bypassAuthForTests: false });
+  const database = openDatabase(':memory:');
+  const issuer = await startTestServer({ authTokenSecret: tokenSecret, bypassAuthForTests: false, database });
+  const worker = await startTestServer({ authTokenSecret: tokenSecret, bypassAuthForTests: false, database });
   try {
     const registration = await issuer.request('POST', '/api/auth/register', {
       name: 'Cross Instance',
@@ -42,6 +44,7 @@ test('token login tetap dapat dipakai di instance backend lain', async () => {
     assert.equal(task.status, 201);
   } finally {
     await Promise.all([issuer.close(), worker.close()]);
+    database.close();
   }
 });
 

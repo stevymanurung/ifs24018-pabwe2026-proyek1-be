@@ -4,10 +4,11 @@ import { openDatabase } from '../../src/db/connection.js';
 const silentLogger = { error() {}, log() {} };
 
 /** Menjalankan aplikasi pada port acak dengan SQLite in-memory. APP_MODULE memungkinkan menguji implementasi lain (draf awal AI). */
-export async function startTestServer({ authTokenSecret = '', bypassAuthForTests = true } = {}) {
+export async function startTestServer({ authTokenSecret = '', bypassAuthForTests = true, database } = {}) {
   const modulePath = process.env.APP_MODULE || new URL('../../src/app.js', import.meta.url).href;
   const { createApp } = await import(modulePath);
-  const db = openDatabase(':memory:');
+  const db = database ?? openDatabase(':memory:');
+  const ownsDatabase = !database;
   const app = createApp({ db, logger: silentLogger, clientDist: '', authTokenSecret, bypassAuthForTests });
   const server = await new Promise((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
@@ -31,7 +32,11 @@ export async function startTestServer({ authTokenSecret = '', bypassAuthForTests
   return {
     request,
     base,
-    close: () => new Promise((resolve) => server.close(() => { db.close(); resolve(); })),
+    close: () => new Promise((resolve, reject) => server.close(async (error) => {
+      if (ownsDatabase) await db.close();
+      if (error) reject(error);
+      else resolve();
+    })),
   };
 }
 

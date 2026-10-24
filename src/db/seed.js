@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import { config } from '../config/env.js';
 import { logger } from '../utils/logger.js';
-import { openDatabase } from './connection.js';
+import { openDatabase, openPostgresDatabase } from './connection.js';
 
 const SESSIONS = [
   ['Pengembangan Aplikasi Web', 0, '08:00', '10:00', 'GD 513'],
@@ -20,6 +20,8 @@ const offsetDate = (days) => {
 
 /** Mengisi data contoh hanya jika database masih kosong. Mengembalikan true jika data dimasukkan. */
 export function seedDemoData(db) {
+  if (db.dialect === 'postgres') return seedPostgresData(db);
+
   const { total } = db.prepare('SELECT COUNT(*) AS total FROM sessions').get();
   const { total: taskTotal } = db.prepare('SELECT COUNT(*) AS total FROM tasks').get();
   if (total > 0 || taskTotal > 0) return false;
@@ -42,9 +44,34 @@ export function seedDemoData(db) {
   return true;
 }
 
+async function seedPostgresData(db) {
+  const { total } = await db.prepare('SELECT COUNT(*) AS total FROM sessions').get();
+  const { total: taskTotal } = await db.prepare('SELECT COUNT(*) AS total FROM tasks').get();
+  if (Number(total) > 0 || Number(taskTotal) > 0) return false;
+
+  await db.transaction(async (transactionDb) => {
+    const insertSession = transactionDb.prepare('INSERT INTO sessions (course, day, start_time, end_time, room) VALUES (?, ?, ?, ?, ?)');
+    const insertTask = transactionDb.prepare('INSERT INTO tasks (title, course, due_date, remind_at, done) VALUES (?, ?, ?, ?, ?)');
+    const insertAlarm = transactionDb.prepare('INSERT INTO alarms (label, time, days, enabled) VALUES (?, ?, ?, 1)');
+
+    for (const row of SESSIONS) await insertSession.run(...row);
+    await insertTask.run('Kumpulkan Proyek 1 PABWE', 'Pengembangan Aplikasi Web', offsetDate(2), '09:00', 0);
+    await insertTask.run('Laporan praktikum jaringan', 'Jaringan Komputer', offsetDate(-2), '', 0);
+    await insertTask.run('Latihan soal normalisasi', 'Basis Data', offsetDate(0), '', 0);
+    await insertTask.run('Kuis struktur data', 'Struktur Data', offsetDate(3), '', 0);
+    await insertTask.run('Resume bab 5', 'Basis Data', offsetDate(-5), '', 1);
+    await insertTask.run('Slide presentasi PAW', 'Pengembangan Aplikasi Web', offsetDate(-4), '', 1);
+    await insertTask.run('Belajar Svelte untuk modul 6', '', '', '', 0);
+    await insertAlarm.run('Belajar mandiri', '19:30', '0,1,2,3,4');
+  });
+  return true;
+}
+
 // Dijalankan langsung: `npm run seed`
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const db = openDatabase(config.dbFile);
-  logger.info(seedDemoData(db) ? 'Data contoh dimasukkan.' : 'Database sudah berisi data; seed dilewati.');
-  db.close();
+  const db = config.databaseUrl
+    ? await openPostgresDatabase(config.databaseUrl)
+    : openDatabase(config.dbFile);
+  logger.info(await seedDemoData(db) ? 'Data contoh dimasukkan.' : 'Database sudah berisi data; seed dilewati.');
+  await db.close();
 }

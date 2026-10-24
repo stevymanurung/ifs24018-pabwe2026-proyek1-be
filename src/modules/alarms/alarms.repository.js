@@ -3,7 +3,7 @@ const toAlarm = (row) => ({
   label: row.label,
   time: row.time,
   days: row.days.split(',').map(Number),
-  enabled: row.enabled === 1,
+  enabled: row.enabled === 1 || row.enabled === true,
 });
 
 export function createAlarmRepository(db) {
@@ -14,15 +14,19 @@ export function createAlarmRepository(db) {
   const deleteById = db.prepare('DELETE FROM alarms WHERE id = ? AND user_id = ?');
 
   return {
-    findAll: (userId = 1) => selectAll.all(userId).map(toAlarm),
-    create({ label, time, days }, userId = 1) {
-      const { lastInsertRowid } = insert.run(userId, label, time, days.join(','));
-      return toAlarm(selectById.get(lastInsertRowid, userId));
+    async findAll(userId = 1) {
+      return (await selectAll.all(userId)).map(toAlarm);
     },
-    setEnabled(id, enabled, userId = 1) {
-      if (updateEnabled.run(enabled ? 1 : 0, id, userId).changes === 0) return null;
-      return toAlarm(selectById.get(id, userId));
+    async create({ label, time, days }, userId = 1) {
+      const { lastInsertRowid } = await insert.run(userId, label, time, days.join(','));
+      return toAlarm(await selectById.get(lastInsertRowid, userId));
     },
-    remove: (id, userId = 1) => deleteById.run(id, userId).changes > 0,
+    async setEnabled(id, enabled, userId = 1) {
+      if ((await updateEnabled.run(enabled ? 1 : 0, id, userId)).changes === 0) return null;
+      return toAlarm(await selectById.get(id, userId));
+    },
+    async remove(id, userId = 1) {
+      return (await deleteById.run(id, userId)).changes > 0;
+    },
   };
 }
