@@ -29,5 +29,6 @@ Repositori ini adalah backend API, bukan frontend web. Setelah deployment, `/` m
 
 - Pastikan Root Directory proyek Vercel menunjuk ke folder backend yang berisi `package.json` dan `vercel.json`.
 - Deploy branch yang berisi `api/index.js`, `src/app.js` dengan ekspor bernama `createApp`, dan `src/config/env.js`.
+- Routing Vercel harus meneruskan semua path ke `api/index.js`; setelah deployment, `GET /` harus mengembalikan JSON `{"name":"Study Planner API","status":"ok",...}` dan `GET /api/health` harus mengembalikan `{"status":"ok"}`. Jika `/api/health` bekerja tetapi `/` masih menampilkan `Cannot GET /`, periksa deployment Production dan pastikan domain mengarah ke deployment terbaru dari branch tersebut.
 - Untuk frontend di domain berbeda, set `CORS_ORIGIN` ke URL frontend lengkap (contoh `https://nama-frontend.vercel.app`). Jika memakai preview deployment, origin harus sesuai domain yang dipakai.
 - SQLite pada `/tmp/planner.db` bersifat sementara di Vercel; gunakan database persisten eksternal jika data akun harus bertahan.
