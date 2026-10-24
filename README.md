@@ -38,9 +38,9 @@ Repositori ini adalah backend API, bukan frontend web. Vercel Functions tidak bo
 
 - Pastikan Root Directory proyek Vercel menunjuk ke folder backend yang berisi `package.json` dan `vercel.json`.
 - Deploy branch yang berisi `api/index.js`, `src/app.js` dengan ekspor bernama `createApp`, dan `src/config/env.js`.
-- Buat project Supabase. Dari Project Settings → Database, salin connection string PostgreSQL **Transaction Pooler** dan set sebagai `DATABASE_URL` pada Environment Variables project backend Vercel.
+- Buat project Supabase. Dari Project Settings → Database, salin connection string PostgreSQL **Transaction Pooler** dan set sebagai `DATABASE_URL` pada Environment Variables project backend Vercel. Backend juga menerima `POSTGRES_URL` bila Vercel Postgres mengisi nama tersebut.
 - Set `AUTH_TOKEN_SECRET` minimal 32 karakter pada environment backend Vercel. Tabel aplikasi dimigrasikan otomatis saat backend mulai; semua instance menggunakan akun, sesi, jadwal, tugas, alarm, dan pengaturan yang sama.
-- Jangan commit atau membagikan `DATABASE_URL` maupun `AUTH_TOKEN_SECRET`. Setelah menambah environment variables, redeploy backend.
+- Jangan commit atau membagikan `DATABASE_URL`, `POSTGRES_URL`, maupun `AUTH_TOKEN_SECRET`. Setelah menambah environment variables, redeploy backend.
 - Akun dan data yang sebelumnya tersimpan di `/tmp/planner.db` tidak dapat dipindahkan otomatis karena file tersebut tidak persisten dan tidak tersedia untuk migrasi. Pengguna perlu membuat akun sekali lagi di database baru; setelah itu login normal akan memakai akun yang sama.
 - Routing Vercel harus meneruskan semua path ke `api/index.js`; setelah deployment, `GET /` harus mengembalikan JSON `{"name":"Study Planner API","status":"ok",...}` dan `GET /api/health` harus mengembalikan `{"status":"ok"}`. Jika `/api/health` bekerja tetapi `/` masih menampilkan `Cannot GET /`, periksa deployment Production dan pastikan domain mengarah ke deployment terbaru dari branch tersebut.
 - Untuk frontend di domain berbeda, set `CORS_ORIGIN` ke URL frontend lengkap (contoh `https://nama-frontend.vercel.app`). Beberapa origin dapat dipisahkan koma untuk menyertakan domain preview. Preflight API mengizinkan header `Authorization` yang dibutuhkan endpoint sesi dan dashboard.

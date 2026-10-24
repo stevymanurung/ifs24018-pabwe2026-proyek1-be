@@ -3,13 +3,14 @@ import { fileURLToPath } from 'node:url';
 
 const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const authTokenSecret = process.env.AUTH_TOKEN_SECRET || '';
-const databaseUrl = process.env.DATABASE_URL || '';
+export const resolveDatabaseUrl = (env = process.env) => env.DATABASE_URL || env.POSTGRES_URL || '';
+const databaseUrl = resolveDatabaseUrl();
 
 if ((process.env.VERCEL || process.env.NODE_ENV === 'production') && authTokenSecret.length < 32) {
   throw new Error('AUTH_TOKEN_SECRET wajib diatur minimal 32 karakter di production.');
 }
 if (process.env.VERCEL && !databaseUrl) {
-  throw new Error('DATABASE_URL wajib diatur ke Supabase PostgreSQL; SQLite di /tmp tidak persisten di Vercel.');
+  throw new Error('DATABASE_URL atau POSTGRES_URL wajib diatur ke PostgreSQL persisten; SQLite di /tmp tidak persisten di Vercel.');
 }
 
 /** Konfigurasi aplikasi dibaca satu kali dari environment variable. */
