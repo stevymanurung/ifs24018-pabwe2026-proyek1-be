@@ -12,7 +12,6 @@ import { logger as defaultLogger } from './utils/logger.js';
 /** Membuat aplikasi Express. Database diinjeksikan sehingga pengujian dapat memakai SQLite in-memory. */
 export function createApp({ db, logger = defaultLogger, clientDist = config.clientDist } = {}) {
   if (!db) throw new TypeError('createApp membutuhkan koneksi database melalui opsi db.');
-
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
@@ -22,7 +21,7 @@ export function createApp({ db, logger = defaultLogger, clientDist = config.clie
   app.use('/api', createApiRouter(createContainer(db), db));
   app.use('/api', apiNotFound);
 
-  // Express dapat menyajikan front-end hasil build jika direktori tersedia.
+  // Sajikan frontend hanya jika folder build tersedia.
   const distDir = clientDist ? path.resolve(clientDist) : '';
   if (distDir && fs.existsSync(path.join(distDir, 'index.html'))) {
     app.use(express.static(distDir));
