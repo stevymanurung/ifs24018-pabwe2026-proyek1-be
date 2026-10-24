@@ -5,6 +5,7 @@ import { createSessionRoutes } from './modules/sessions/sessions.routes.js';
 import { createSettingsRoutes } from './modules/settings/settings.routes.js';
 import { createTaskRoutes } from './modules/tasks/tasks.routes.js';
 import { createAuthRoutes, requireAuth } from './modules/auth/auth.js';
+import { asyncHandler } from './middleware/asyncHandler.js';
 
 /** Semua endpoint API dikumpulkan di sini dan dipasang di bawah /api. */
 export function createApiRouter(controllers, db, authOptions) {
@@ -19,7 +20,10 @@ export function createApiRouter(controllers, db, authOptions) {
       dashboard: 'GET /api/dashboard',
     },
   }));
-  router.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  router.get('/health', asyncHandler(async (_req, res) => {
+    await db.prepare('SELECT 1').get();
+    return res.json({ status: 'ok', database: 'connected' });
+  }));
   router.use('/auth', createAuthRoutes(db, authOptions));
   const auth = requireAuth(db, authOptions);
   router.use('/sessions', auth, createSessionRoutes(controllers.sessions));

@@ -4,7 +4,7 @@ import { apiTest } from '../helpers/testServer.js';
 apiTest('GET /api/health menjawab ok', async ({ request }) => {
   const res = await request('GET', '/api/health');
   assert.equal(res.status, 200);
-  assert.deepEqual(res.json, { status: 'ok' });
+  assert.deepEqual(res.json, { status: 'ok', database: 'connected' });
 });
 
 apiTest('GET /api menampilkan petunjuk endpoint autentikasi', async ({ request }) => {
