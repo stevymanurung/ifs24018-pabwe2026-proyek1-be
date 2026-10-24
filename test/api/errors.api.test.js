@@ -7,8 +7,21 @@ apiTest('GET /api/health menjawab ok', async ({ request }) => {
   assert.deepEqual(res.json, { status: 'ok' });
 });
 
+apiTest('GET / menampilkan informasi backend', async ({ request }) => {
+  const res = await request('GET', '/');
+  assert.equal(res.status, 200);
+  assert.equal(res.json?.name, 'Study Planner API');
+  assert.equal(res.json?.status, 'ok');
+});
+
 apiTest('endpoint /api yang tidak dikenal menghasilkan JSON 404, bukan HTML', async ({ request }) => {
   const res = await request('GET', '/api/tidak-ada');
+  assert.equal(res.status, 404);
+  assert.equal(res.json?.error.code, 'NOT_FOUND');
+});
+
+apiTest('rute non-API yang tidak dikenal menghasilkan JSON 404, bukan Cannot GET', async ({ request }) => {
+  const res = await request('GET', '/rute-tidak-ada');
   assert.equal(res.status, 404);
   assert.equal(res.json?.error.code, 'NOT_FOUND');
 });

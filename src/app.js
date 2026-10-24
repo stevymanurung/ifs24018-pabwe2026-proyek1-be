@@ -7,6 +7,7 @@ import { createContainer } from './container.js';
 import { cors } from './middleware/cors.js';
 import { apiNotFound, errorHandler } from './middleware/errorHandler.js';
 import { createApiRouter } from './routes.js';
+import { HttpError } from './utils/httpError.js';
 import { logger as defaultLogger } from './utils/logger.js';
 
 /** Membuat aplikasi Express. Database diinjeksikan sehingga pengujian dapat memakai SQLite in-memory. */
@@ -18,14 +19,6 @@ export function createApp({ db, logger = defaultLogger, clientDist = config.clie
   app.use(cors(config.corsOrigin));
   app.use(express.json({ limit: '10kb' }));
 
-  // Root endpoint makes it clear the backend is online; the frontend remains a separate deployment.
-  app.get('/', (_req, res) => res.json({
-    name: 'Study Planner API',
-    status: 'ok',
-    health: '/api/health',
-    endpoints: ['/api/auth', '/api/tasks', '/api/sessions', '/api/alarms', '/api/settings', '/api/dashboard'],
-  }));
-
   app.use('/api', createApiRouter(createContainer(db), db));
   app.use('/api', apiNotFound);
 
@@ -36,6 +29,17 @@ export function createApp({ db, logger = defaultLogger, clientDist = config.clie
     app.get('*', (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
   }
 
+  // Root endpoint makes it clear the backend is online when no frontend build is present.
+  app.get('/', (_req, res) => res.json({
+    name: 'Study Planner API',
+    status: 'ok',
+    health: '/api/health',
+    endpoints: ['/api/auth', '/api/tasks', '/api/sessions', '/api/alarms', '/api/settings', '/api/dashboard'],
+  }));
+
+  app.use((req, _res, next) => {
+    next(new HttpError(404, 'NOT_FOUND', `Route ${req.method} ${req.originalUrl} tidak ditemukan`));
+  });
   app.use(errorHandler(logger));
   return app;
 }
