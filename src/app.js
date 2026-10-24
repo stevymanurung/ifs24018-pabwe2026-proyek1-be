@@ -18,6 +18,14 @@ export function createApp({ db, logger = defaultLogger, clientDist = config.clie
   app.use(cors(config.corsOrigin));
   app.use(express.json({ limit: '10kb' }));
 
+  // Root endpoint makes it clear the backend is online; the frontend remains a separate deployment.
+  app.get('/', (_req, res) => res.json({
+    name: 'Study Planner API',
+    status: 'ok',
+    health: '/api/health',
+    endpoints: ['/api/auth', '/api/tasks', '/api/sessions', '/api/alarms', '/api/settings', '/api/dashboard'],
+  }));
+
   app.use('/api', createApiRouter(createContainer(db), db));
   app.use('/api', apiNotFound);
 
