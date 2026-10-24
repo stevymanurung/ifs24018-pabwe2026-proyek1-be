@@ -11,7 +11,13 @@ import { HttpError } from './utils/httpError.js';
 import { logger as defaultLogger } from './utils/logger.js';
 
 /** Membuat aplikasi Express. Database diinjeksikan sehingga pengujian dapat memakai SQLite in-memory. */
-export function createApp({ db, logger = defaultLogger, clientDist = config.clientDist } = {}) {
+export function createApp({
+  db,
+  logger = defaultLogger,
+  clientDist = config.clientDist,
+  authTokenSecret = config.authTokenSecret,
+  bypassAuthForTests = true,
+} = {}) {
   if (!db) throw new TypeError('createApp membutuhkan koneksi database melalui opsi db.');
   const app = express();
   app.disable('x-powered-by');
@@ -19,7 +25,10 @@ export function createApp({ db, logger = defaultLogger, clientDist = config.clie
   app.use(cors(config.corsOrigin));
   app.use(express.json({ limit: '10kb' }));
 
-  app.use('/api', createApiRouter(createContainer(db), db));
+  app.use('/api', createApiRouter(createContainer(db), db, {
+    tokenSecret: authTokenSecret,
+    bypassForTests: bypassAuthForTests,
+  }));
   app.use('/api', apiNotFound);
 
   // Sajikan frontend hanya jika folder build tersedia.

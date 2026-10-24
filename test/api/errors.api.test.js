@@ -7,6 +7,12 @@ apiTest('GET /api/health menjawab ok', async ({ request }) => {
   assert.deepEqual(res.json, { status: 'ok' });
 });
 
+apiTest('GET /api menampilkan petunjuk endpoint autentikasi', async ({ request }) => {
+  const res = await request('GET', '/api');
+  assert.equal(res.status, 200);
+  assert.equal(res.json?.endpoints.login, 'POST /api/auth/login');
+});
+
 apiTest('GET / menampilkan informasi backend', async ({ request }) => {
   const res = await request('GET', '/');
   assert.equal(res.status, 200);

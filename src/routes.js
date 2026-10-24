@@ -7,11 +7,21 @@ import { createTaskRoutes } from './modules/tasks/tasks.routes.js';
 import { createAuthRoutes, requireAuth } from './modules/auth/auth.js';
 
 /** Semua endpoint API dikumpulkan di sini dan dipasang di bawah /api. */
-export function createApiRouter(controllers, db) {
+export function createApiRouter(controllers, db, authOptions) {
   const router = Router();
+  router.get('/', (_req, res) => res.json({
+    name: 'Study Planner API',
+    status: 'ok',
+    health: '/api/health',
+    endpoints: {
+      login: 'POST /api/auth/login',
+      register: 'POST /api/auth/register',
+      dashboard: 'GET /api/dashboard',
+    },
+  }));
   router.get('/health', (_req, res) => res.json({ status: 'ok' }));
-  router.use('/auth', createAuthRoutes(db));
-  const auth = requireAuth(db);
+  router.use('/auth', createAuthRoutes(db, authOptions));
+  const auth = requireAuth(db, authOptions);
   router.use('/sessions', auth, createSessionRoutes(controllers.sessions));
   router.use('/tasks', auth, createTaskRoutes(controllers.tasks));
   router.use('/alarms', auth, createAlarmRoutes(controllers.alarms));
