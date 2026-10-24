@@ -1,16 +1,28 @@
+import { hkdfSync } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const authTokenSecret = process.env.AUTH_TOKEN_SECRET || '';
 export const resolveDatabaseUrl = (env = process.env) => env.DATABASE_URL || env.POSTGRES_URL || '';
+export const resolveAuthTokenSecret = (env = process.env) => {
+  const configuredSecret = env.AUTH_TOKEN_SECRET || '';
+  if (configuredSecret) return configuredSecret;
+
+  const databaseUrl = resolveDatabaseUrl(env);
+  if (!databaseUrl) return '';
+
+  return Buffer.from(
+    hkdfSync('sha256', Buffer.from(databaseUrl), Buffer.from('study-planner-auth-token'), Buffer.from('v1'), 32),
+  ).toString('hex');
+};
+const authTokenSecret = resolveAuthTokenSecret();
 const databaseUrl = resolveDatabaseUrl();
 
-if ((process.env.VERCEL || process.env.NODE_ENV === 'production') && authTokenSecret.length < 32) {
-  throw new Error('AUTH_TOKEN_SECRET wajib diatur minimal 32 karakter di production.');
-}
 if (process.env.VERCEL && !databaseUrl) {
   throw new Error('DATABASE_URL atau POSTGRES_URL wajib diatur ke PostgreSQL persisten; SQLite di /tmp tidak persisten di Vercel.');
+}
+if ((process.env.VERCEL || process.env.NODE_ENV === 'production') && authTokenSecret.length < 32) {
+  throw new Error('AUTH_TOKEN_SECRET wajib diatur minimal 32 karakter, atau DATABASE_URL/POSTGRES_URL harus tersedia untuk membuatnya di production.');
 }
 
 /** Konfigurasi aplikasi dibaca satu kali dari environment variable. */
