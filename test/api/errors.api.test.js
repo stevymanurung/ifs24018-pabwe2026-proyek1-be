@@ -10,6 +10,7 @@ apiTest('GET /api/health menjawab ok', async ({ request }) => {
     dialect: 'sqlite',
     revision: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
   });
+  assert.equal(res.headers.get('cache-control'), 'no-store');
 });
 
 apiTest('GET /api menampilkan petunjuk endpoint autentikasi', async ({ request }) => {

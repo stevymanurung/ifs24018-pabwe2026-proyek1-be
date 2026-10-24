@@ -22,6 +22,7 @@ export function createApiRouter(controllers, db, authOptions) {
   }));
   router.get('/health', asyncHandler(async (_req, res) => {
     await db.prepare('SELECT 1').get();
+    res.set('Cache-Control', 'no-store');
     return res.json({
       status: 'ok',
       database: 'connected',
